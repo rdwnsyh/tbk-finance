@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Entry point `php artisan db:seed`.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Urutan WAJIB: kategori -> COA -> transaksi.
+        // Kalau dibalik, foreign key (coa_category_id / coa_id) akan gagal
+        // karena data induknya belum tersedia.
+        $this->call([
+            CoaCategorySeeder::class,
+            CoaSeeder::class,
+            TransactionSeeder::class,
         ]);
     }
 }
