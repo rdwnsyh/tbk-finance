@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CoaCategoryController;
+use App\Http\Controllers\CoaController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman awal langsung diarahkan ke daftar kategori agar aplikasi bisa
@@ -11,9 +12,12 @@ Route::redirect('/', '/coa-categories');
 // Resource route standar CRUD. `show` dikecualikan karena daftar sudah memuat
 // semua informasi yang dibutuhkan, jadi halaman detail terpisah tidak perlu.
 //
-// `parameters()` memaksa nama parameter menjadi `coaCategory` (camelCase).
-// Tanpa ini Laravel memakai `coa_category`, yang akan menyulitkan route model
-// binding karena type-hint controller memakai variabel `$coaCategory`.
+// `parameters()` memaksa nama parameter route menjadi camelCase agar cocok
+// dengan type-hint controller dan route model binding.
 Route::resource('coa-categories', CoaCategoryController::class)
     ->except(['show'])
     ->parameters(['coa-categories' => 'coaCategory']);
+
+Route::resource('coas', CoaController::class)
+    ->except(['show'])
+    ->parameters(['coas' => 'coa']);
