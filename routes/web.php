@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CoaCategoryController;
 use App\Http\Controllers\CoaController;
+use App\Http\Controllers\ProfitLossController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,3 +27,9 @@ Route::resource('coas', CoaController::class)
 Route::resource('transactions', TransactionController::class)
     ->except(['show'])
     ->parameters(['transactions' => 'transaction']);
+
+// Laporan laba/rugi memakai satu route GET dengan filter rentang bulan.
+// Parameter dikirim lewat query string (bukan segment) agar rentang bisa
+// di-bookmark dan halaman bisa di-refresh tanpa mengubah state.
+Route::get('profit-loss', [ProfitLossController::class, 'index'])
+    ->name('profit-loss.index');
