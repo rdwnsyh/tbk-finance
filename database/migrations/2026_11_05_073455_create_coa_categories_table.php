@@ -11,12 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // create_coa_categories_table
-        Schema::create('coa_categories', function (Blueprint $t) {
-            $t->id();
-            $t->string('name')->unique();
-            $t->enum('type', ['income', 'expense']);   // dibutuhkan untuk Total Income/Expense
-            $t->timestamps();
+        // Tabel master kategori COA.
+        Schema::create('coa_categories', function (Blueprint $table) {
+            $table->id();
+
+            // Nama kategori unik agar tidak ada dua kategori dengan makna sama,
+            // sehingga laporan tidak terpecah ke dua baris yang sebenarnya identik.
+            $table->string('name')->unique();
+
+            // `type` disimpan di level database sebagai enum, bukan hanya divalidasi
+            // di aplikasi. Alasannya, laporan Profit/Loss menentukan sisi income/expense
+            // dari kolom ini, jadi nilainya harus tetap valid walau data diubah
+            // lewat proses lain (mis. seeder/import).
+            $table->enum('type', ['income', 'expense']);
+
+            $table->timestamps();
         });
     }
 
@@ -25,6 +34,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Tabel COA yang mereferensikan kategori dihapus lebih dulu oleh migrasinya
+        // sendiri karena foreign key memakai restrictOnDelete.
         Schema::dropIfExists('coa_categories');
     }
 };

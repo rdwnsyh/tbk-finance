@@ -11,13 +11,24 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // create_coas_table
-        Schema::create('coas', function (Blueprint $t) {
-            $t->id();
-            $t->unsignedInteger('code')->unique();
-            $t->string('name');
-            $t->foreignId('coa_category_id')->constrained('coa_categories')->restrictOnDelete();
-            $t->timestamps();
+        // Tabel Chart of Account (daftar akun).
+        Schema::create('coas', function (Blueprint $table) {
+            $table->id();
+
+            // Kode akun unik (contoh: 401). unsignedInteger dipakai karena kode COA
+            // selalu bilangan bulat positif dan tidak membutuhkan nilai negatif.
+            $table->unsignedInteger('code')->unique();
+
+            $table->string('name');
+
+            // restrictOnDelete mencegah kategori dihapus selama masih punya COA.
+            // Mengapa: kalau kategori hilang, tipe income/expense COA ikut hilang
+            // dan laporan Profit/Loss menjadi tidak bisa dihitung.
+            $table->foreignId('coa_category_id')
+                ->constrained('coa_categories')
+                ->restrictOnDelete();
+
+            $table->timestamps();
         });
     }
 
