@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CoaCategoryController;
 use App\Http\Controllers\CoaController;
+use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
 // Halaman awal langsung diarahkan ke daftar kategori agar aplikasi bisa
@@ -21,3 +22,7 @@ Route::resource('coa-categories', CoaCategoryController::class)
 Route::resource('coas', CoaController::class)
     ->except(['show'])
     ->parameters(['coas' => 'coa']);
+
+Route::resource('transactions', TransactionController::class)
+    ->except(['show'])
+    ->parameters(['transactions' => 'transaction']);

@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Disamakan dengan waktu Indonesia agar tanggal default pada form transaksi
+    // dan pengelompokan periode laporan sesuai tanggal lokal, bukan UTC.
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------
