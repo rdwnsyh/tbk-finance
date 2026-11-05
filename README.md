@@ -1,58 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# TBK Finance
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi sederhana untuk mencatat Chart of Accounts (COA) dan transaksi, lalu menampilkan laporan laba/rugi bulanan. Dibuat sebagai technical test dengan fokus pada struktur kode yang rapi, validasi, dan laporan yang mudah diverifikasi.
 
-## About Laravel
+## Fitur
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- CRUD Kategori COA dengan tipe `income` / `expense`.
+- CRUD COA (kode unik, nama, dan kategori).
+- CRUD transaksi dengan form Vue:
+  - satu nominal + pilihan Debit/Credit;
+  - hanya salah satu sisi yang boleh lebih dari 0;
+  - validasi tetap dilakukan di server.
+- Laporan laba/rugi per bulan dengan filter rentang bulan.
+- Export laporan ke file Excel (`.xlsx`).
+- Data contoh sesuai sheet Excel technical test (5 kategori, 8 COA, 3 transaksi).
+- Tanpa autentikasi/login (sesuai kebutuhan technical test).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Teknologi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3 + Laravel 13
+- MySQL (database aplikasi)
+- Tailwind CSS 4 + Vite
+- Vue 3 (hanya untuk form transaksi)
+- `maatwebsite/excel` 4 + PhpSpreadsheet
+- PHPUnit 12 (test memakai SQLite in-memory)
 
-## Learning Laravel
+## Prasyarat
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- PHP >= 8.3 dengan extension `zip`, `xml`, `xmlwriter`, `mbstring`, `gd`, `fileinfo`
+- Composer
+- Node.js + npm
+- MySQL
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalasi
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Salin environment lalu sesuaikan koneksi database:
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Di Windows PowerShell:
 
-## Code of Conduct
+```powershell
+Copy-Item .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Buat database MySQL, misalnya `db_tbk_finance`, lalu sesuaikan `.env`:
 
-## Security Vulnerabilities
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_tbk_finance
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Jalankan migrasi dan seeder:
 
-## License
+```bash
+php artisan migrate --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Install frontend dependency dan build asset:
+
+```bash
+npm install
+npm run build
+```
+
+Jalankan aplikasi:
+
+```bash
+php artisan serve
+```
+
+Buka `http://127.0.0.1:8000`. Halaman awal akan diarahkan ke daftar kategori COA.
+
+Untuk development frontend, gunakan `npm run dev` di terminal terpisah.
+
+## Halaman Utama
+
+| Path | Keterangan |
+|---|---|
+| `/` | Redirect ke `/coa-categories` |
+| `/coa-categories` | CRUD kategori COA |
+| `/coas` | CRUD COA |
+| `/transactions` | CRUD transaksi |
+| `/profit-loss` | Laporan laba/rugi + filter bulan |
+| `/profit-loss/export` | Unduh laporan `.xlsx` |
+
+## Aturan Bisnis
+
+- Setiap transaksi hanya boleh memiliki **satu sisi** yang lebih dari 0: debit atau credit.
+- COA bertipe `income`:
+  - pendapatan = `credit - debit`.
+- COA bertipe `expense`:
+  - beban = `debit - credit`.
+- Laba/rugi bersih = pendapatan - beban.
+- Bulan tanpa transaksi tetap ditampilkan dengan nilai 0.
+- Rentang laporan memakai format `YYYY-MM` dan bulan akhir tidak boleh lebih awal dari bulan mulai.
+
+## Skema Data
+
+- `coa_categories`: `name` unik, `type` (`income` / `expense`).
+- `coas`: `code` unik, `name`, `coa_category_id` (restrict on delete).
+- `transactions`: `date` (index), `coa_id` (restrict on delete), `description` nullable, `debit` dan `credit` `decimal(15,2)` default 0.
+
+## Struktur Penting
+
+```text
+app/
+  Exports/ProfitLossExport.php
+  Http/Controllers/
+    CoaCategoryController.php
+    CoaController.php
+    TransactionController.php
+    ProfitLossController.php
+  Http/Requests/
+    CoaCategoryRequest.php
+    CoaRequest.php
+    TransactionRequest.php
+    ProfitLossRequest.php
+  Models/
+    CoaCategory.php
+    Coa.php
+    Transaction.php
+  Services/ProfitLossService.php
+database/
+  migrations/
+  seeders/
+resources/
+  js/app.js
+  js/components/TransactionForm.vue
+  views/layouts/app.blade.php
+  views/reports/
+  views/transactions/
+tests/Feature/
+  ProfitLossServiceTest.php
+  TransactionValidationTest.php
+```
+
+## Testing
+
+```bash
+php artisan test
+```
+
+Test memakai SQLite in-memory (`phpunit.xml`) dan `RefreshDatabase`, sehingga tidak menyentuh database MySQL aplikasi.
+
+Cakupan test:
+
+- perhitungan pendapatan, beban, laba/rugi bersih, dan total;
+- transaksi pada tanggal terakhir bulan;
+- bulan/periode tanpa transaksi;
+- validasi dua sisi terisi, dua sisi 0, dan COA tidak valid;
+- penyimpanan transaksi debit-only dan credit-only.
+
+## Catatan Teknis
+
+- Timezone aplikasi: `Asia/Jakarta`.
+- Form transaksi memakai Vue, tetapi aturan bisnis tetap divalidasi di server.
+- Beban Vue hanya dimuat di halaman transaksi melalui `@push('scripts')`.
+- Agregasi laporan dilakukan di PHP agar kompatibel dengan MySQL (aplikasi) dan SQLite (test). Untuk data besar, pertimbangkan agregasi SQL + index atau tabel ringkasan bulanan.
+- `WithStrictNullComparison` dipakai pada export agar nilai 0 tetap tertulis di Excel.
+- Batas query laporan memakai awal/akhir hari agar transaksi pada tanggal terakhir bulan tetap masuk, termasuk di SQLite.
+
+## Reset Data
+
+Perintah berikut menghapus seluruh data lalu mengisi ulang data contoh:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Gunakan dengan hati-hati karena data yang ada akan hilang.
