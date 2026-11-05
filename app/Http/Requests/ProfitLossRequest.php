@@ -22,6 +22,7 @@ class ProfitLossRequest extends FormRequest
         return [
             'start_month' => ['nullable', 'date_format:Y-m'],
             'end_month' => ['nullable', 'date_format:Y-m'],
+            'search' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -67,6 +68,7 @@ class ProfitLossRequest extends FormRequest
         return [
             'start_month' => 'bulan mulai',
             'end_month' => 'bulan akhir',
+            'search' => 'pencarian bulan',
         ];
     }
 }

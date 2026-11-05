@@ -6,23 +6,45 @@ use App\Http\Requests\TransactionRequest;
 use App\Models\Coa;
 use App\Models\Transaction;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class TransactionController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'date_from' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:date_from'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+        $dateFrom = $filters['date_from'] ?? '';
+        $dateTo = $filters['date_to'] ?? '';
+
         // Eager load `coa` agar menampilkan kode/nama COA tidak memicu N+1.
         // Urutkan dari tanggal terbaru; `id` dipakai sebagai penentu urutan
         // ketika beberapa transaksi memiliki tanggal yang sama.
         $transactions = Transaction::query()
             ->with('coa')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('description', 'like', "%{$search}%")
+                        ->orWhereHas('coa', function ($query) use ($search) {
+                            $query->where('code', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($dateFrom !== '', fn ($query) => $query->where('date', '>=', $dateFrom))
+            ->when($dateTo !== '', fn ($query) => $query->where('date', '<=', $dateTo))
             ->orderByDesc('date')
             ->orderByDesc('id')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('transactions.index', compact('transactions'));
+        return view('transactions.index', compact('transactions', 'search', 'dateFrom', 'dateTo'));
     }
 
     public function create(): View

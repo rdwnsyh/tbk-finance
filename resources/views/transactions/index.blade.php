@@ -19,6 +19,67 @@
         </a>
     </div>
 
+    <form
+        method="GET"
+        action="{{ route('transactions.index') }}"
+        class="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4"
+    >
+        <div class="min-w-56 flex-1">
+            <label for="search" class="mb-1 block text-sm font-medium text-slate-700">
+                Cari transaksi
+            </label>
+            <input
+                type="search"
+                id="search"
+                name="search"
+                value="{{ $search }}"
+                maxlength="100"
+                placeholder="Deskripsi, kode, atau nama COA"
+                class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+        </div>
+
+        <div>
+            <label for="date_from" class="mb-1 block text-sm font-medium text-slate-700">
+                Dari tanggal
+            </label>
+            <input
+                type="date"
+                id="date_from"
+                name="date_from"
+                value="{{ $dateFrom }}"
+                class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+        </div>
+
+        <div>
+            <label for="date_to" class="mb-1 block text-sm font-medium text-slate-700">
+                Sampai tanggal
+            </label>
+            <input
+                type="date"
+                id="date_to"
+                name="date_to"
+                value="{{ $dateTo }}"
+                class="rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+        </div>
+
+        <button
+            type="submit"
+            class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+        >
+            Cari
+        </button>
+
+        <a
+            href="{{ route('transactions.index') }}"
+            class="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+            Reset
+        </a>
+    </form>
+
     <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table class="min-w-full divide-y divide-slate-200 text-sm">
             <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
@@ -83,7 +144,7 @@
                 @empty
                     <tr>
                         <td colspan="6" class="px-4 py-10 text-center text-slate-500">
-                            Belum ada transaksi.
+                            {{ $search !== '' || $dateFrom !== '' || $dateTo !== '' ? 'Tidak ada transaksi yang cocok dengan filter.' : 'Belum ada transaksi.' }}
                         </td>
                     </tr>
                 @endforelse

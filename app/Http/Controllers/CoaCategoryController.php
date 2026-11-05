@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CoaCategoryRequest;
 use App\Models\CoaCategory;
+use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -12,18 +13,28 @@ class CoaCategoryController extends Controller
     /**
      * Menampilkan daftar kategori dengan pagination.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'type' => ['nullable', 'in:income,expense'],
+        ]);
+        $search = trim($filters['search'] ?? '');
+        $type = $filters['type'] ?? '';
+
         // `withCount('coas')` menghitung jumlah COA dalam SATU query tambahan,
         // bukan satu query per baris (mencegah N+1). Angka ini dipakai untuk
         // ditampilkan sekaligus memberi konteks mengapa sebuah kategori tidak
         // bisa dihapus.
         $coaCategories = CoaCategory::query()
             ->withCount('coas')
+            ->when($search !== '', fn ($query) => $query->where('name', 'like', "%{$search}%"))
+            ->when($type !== '', fn ($query) => $query->where('type', $type))
             ->orderBy('name')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
-        return view('coa-categories.index', compact('coaCategories'));
+        return view('coa-categories.index', compact('coaCategories', 'search', 'type'));
     }
 
     /**

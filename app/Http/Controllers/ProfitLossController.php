@@ -15,17 +15,21 @@ class ProfitLossController extends Controller
     public function index(ProfitLossRequest $request, ProfitLossService $service): View
     {
         [$start, $end] = $this->resolvePeriod($request, $service);
+        $search = trim($request->validated('search', ''));
+        $report = $this->filterReport($service->report($start, $end), $search);
 
         return view('reports.profit_loss', [
-            'report' => $service->report($start, $end),
+            'report' => $report,
             'start' => $start,
             'end' => $end,
+            'search' => $search,
         ]);
     }
 
     public function export(ProfitLossRequest $request, ProfitLossService $service): BinaryFileResponse
     {
         [$start, $end] = $this->resolvePeriod($request, $service);
+        $search = trim($request->validated('search', ''));
 
         // Nama file memuat periode agar hasil unduhan mudah dibedakan.
         $filename = sprintf(
@@ -35,9 +39,44 @@ class ProfitLossController extends Controller
         );
 
         return Excel::download(
-            new ProfitLossExport($service->report($start, $end)),
+            new ProfitLossExport($this->filterReport($service->report($start, $end), $search)),
             $filename,
         );
+    }
+
+    /**
+     * Filter monthly rows by their visible month label and recalculate totals
+     * so the table and exported spreadsheet reflect the same search.
+     *
+     * @param  array{
+     *     rows: \Illuminate\Support\Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     total_income: float,
+     *     total_expense: float,
+     *     total_net: float
+     * }  $report
+     * @return array{
+     *     rows: \Illuminate\Support\Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     total_income: float,
+     *     total_expense: float,
+     *     total_net: float
+     * }
+     */
+    private function filterReport(array $report, string $search): array
+    {
+        if ($search === '') {
+            return $report;
+        }
+
+        $needle = mb_strtolower($search);
+        $report['rows'] = $report['rows']
+            ->filter(fn (array $row): bool => str_contains(mb_strtolower($row['label']), $needle)
+                || str_contains($row['month'], $search))
+            ->values();
+        $report['total_income'] = round((float) $report['rows']->sum('income'), 2);
+        $report['total_expense'] = round((float) $report['rows']->sum('expense'), 2);
+        $report['total_net'] = round((float) $report['rows']->sum('net'), 2);
+
+        return $report;
     }
 
     /**

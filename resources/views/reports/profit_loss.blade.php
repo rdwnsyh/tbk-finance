@@ -49,6 +49,21 @@
             @enderror
         </div>
 
+        <div class="min-w-48 flex-1">
+            <label for="search" class="mb-1 block text-sm font-medium text-slate-700">
+                Cari bulan di tabel
+            </label>
+            <input
+                type="search"
+                id="search"
+                name="search"
+                value="{{ $search }}"
+                maxlength="100"
+                placeholder="Nama bulan atau tahun"
+                class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+            >
+        </div>
+
         <button
             type="submit"
             class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
@@ -66,7 +81,7 @@
         {{-- Rentang aktif dibawa ke URL export agar file yang diunduh sama
              dengan tabel yang sedang dilihat. --}}
         <a
-            href="{{ route('profit-loss.export', ['start_month' => $start->format('Y-m'), 'end_month' => $end->format('Y-m')]) }}"
+            href="{{ route('profit-loss.export', ['start_month' => $start->format('Y-m'), 'end_month' => $end->format('Y-m'), 'search' => $search]) }}"
             class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
         >
             Export Excel
