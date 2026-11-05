@@ -62,6 +62,15 @@
         >
             Reset
         </a>
+
+        {{-- Rentang aktif dibawa ke URL export agar file yang diunduh sama
+             dengan tabel yang sedang dilihat. --}}
+        <a
+            href="{{ route('profit-loss.export', ['start_month' => $start->format('Y-m'), 'end_month' => $end->format('Y-m')]) }}"
+            class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+        >
+            Export Excel
+        </a>
     </form>
 
     @include('reports._profit_loss_table', ['report' => $report])

@@ -28,8 +28,11 @@ Route::resource('transactions', TransactionController::class)
     ->except(['show'])
     ->parameters(['transactions' => 'transaction']);
 
-// Laporan laba/rugi memakai satu route GET dengan filter rentang bulan.
+// Laporan laba/rugi memakai route GET dengan filter rentang bulan.
 // Parameter dikirim lewat query string (bukan segment) agar rentang bisa
 // di-bookmark dan halaman bisa di-refresh tanpa mengubah state.
+Route::get('profit-loss/export', [ProfitLossController::class, 'export'])
+    ->name('profit-loss.export');
+
 Route::get('profit-loss', [ProfitLossController::class, 'index'])
     ->name('profit-loss.index');
