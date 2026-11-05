@@ -2,64 +2,90 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CoaCategoryRequest;
 use App\Models\CoaCategory;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class CoaCategoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan daftar kategori dengan pagination.
      */
-    public function index()
+    public function index(): View
     {
-        //
+        // `withCount('coas')` menghitung jumlah COA dalam SATU query tambahan,
+        // bukan satu query per baris (mencegah N+1). Angka ini dipakai untuk
+        // ditampilkan sekaligus memberi konteks mengapa sebuah kategori tidak
+        // bisa dihapus.
+        $coaCategories = CoaCategory::query()
+            ->withCount('coas')
+            ->orderBy('name')
+            ->paginate(10);
+
+        return view('coa-categories.index', compact('coaCategories'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Form tambah kategori.
      */
-    public function create()
+    public function create(): View
     {
-        //
+        return view('coa-categories.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Simpan kategori baru. Data sudah divalidasi oleh CoaCategoryRequest,
+     * jadi controller tidak perlu memeriksa ulang (tetap tipis).
      */
-    public function store(Request $request)
+    public function store(CoaCategoryRequest $request): RedirectResponse
     {
-        //
+        CoaCategory::create($request->validated());
+
+        return redirect()
+            ->route('coa-categories.index')
+            ->with('success', 'Kategori COA berhasil ditambahkan.');
     }
 
     /**
-     * Display the specified resource.
+     * Form edit kategori.
      */
-    public function show(CoaCategory $coaCategory)
+    public function edit(CoaCategory $coaCategory): View
     {
-        //
+        return view('coa-categories.edit', compact('coaCategory'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Perbarui kategori.
      */
-    public function edit(CoaCategory $coaCategory)
+    public function update(CoaCategoryRequest $request, CoaCategory $coaCategory): RedirectResponse
     {
-        //
+        $coaCategory->update($request->validated());
+
+        return redirect()
+            ->route('coa-categories.index')
+            ->with('success', 'Kategori COA berhasil diperbarui.');
     }
 
     /**
-     * Update the specified resource in storage.
+     * Hapus kategori hanya jika belum dipakai COA.
      */
-    public function update(Request $request, CoaCategory $coaCategory)
+    public function destroy(CoaCategory $coaCategory): RedirectResponse
     {
-        //
-    }
+        // Cek relasi lebih dulu supaya pesan error ramah pengguna.
+        // Foreign key `restrictOnDelete` di database tetap menjadi pengaman
+        // terakhir bila ada proses lain menyisipkan COA tepat di antara
+        // pengecekan dan proses delete.
+        if ($coaCategory->coas()->exists()) {
+            return redirect()
+                ->route('coa-categories.index')
+                ->with('error', 'Kategori "'.$coaCategory->name.'" tidak bisa dihapus karena masih digunakan oleh COA.');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(CoaCategory $coaCategory)
-    {
-        //
+        $coaCategory->delete();
+
+        return redirect()
+            ->route('coa-categories.index')
+            ->with('success', 'Kategori COA berhasil dihapus.');
     }
 }
