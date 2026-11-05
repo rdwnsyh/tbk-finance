@@ -51,9 +51,16 @@ class ProfitLossService
         $periodEnd = Carbon::parse($end)->endOfMonth();
 
         // Eager load relasi agar tipe kategori COA tidak memicu N+1.
+        //
+        // Batas memakai awal/akhir hari (bukan hanya tanggal): di SQLite kolom
+        // DATE disimpan sebagai teks 'Y-m-d H:i:s', sehingga transaksi pada
+        // tanggal terakhir bulan bisa terlewat jika batas atasnya 'Y-m-d'.
         $transactions = Transaction::query()
             ->with('coa.coaCategory')
-            ->whereBetween('date', [$periodStart->toDateString(), $periodEnd->toDateString()])
+            ->whereBetween('date', [
+                $periodStart->toDateTimeString(),
+                $periodEnd->toDateTimeString(),
+            ])
             ->get(['id', 'date', 'coa_id', 'debit', 'credit']);
 
         // Siapkan semua bulan dalam rentang. Bulan tanpa transaksi tetap
