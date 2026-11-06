@@ -6,65 +6,81 @@
 
         <title>@yield('title', 'TBK Finance')</title>
 
-        {{-- Hanya CSS yang dimuat di semua halaman. JavaScript/Vue dimuat khusus
-             di halaman yang membutuhkan lewat @stack('scripts'), supaya halaman
-             CRUD biasa tidak ikut mengunduh bundle Vue. --}}
         @vite('resources/css/app.css')
     </head>
-    <body class="min-h-screen bg-slate-100 text-slate-800">
-        <header class="border-b border-slate-200 bg-white">
-            <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-                <a href="{{ route('coa-categories.index') }}" class="text-lg font-semibold text-slate-900">
-                    TBK Finance
+    <body class="app-body">
+        <div class="app-shell">
+            <aside class="app-sidebar">
+                <a href="{{ route('dashboard') }}" class="app-brand">
+                    <span class="app-brand-mark" aria-hidden="true">T</span>
+                    <span>TBK <span>Finance</span></span>
                 </a>
 
-                <nav class="flex flex-wrap items-center gap-1 text-sm">
-                    {{-- Route::has dipakai agar menu modul yang belum dibuat tidak
-                         dirender sebagai link rusak. Menu otomatis muncul ketika
-                         route-nya ditambahkan pada langkah berikutnya. --}}
-                    @foreach ([
-                        'coa-categories.index' => 'Kategori COA',
-                        'coas.index' => 'COA',
-                        'transactions.index' => 'Transaksi',
-                        'profit-loss.index' => 'Laporan',
-                    ] as $routeName => $label)
-                        @if (Route::has($routeName))
-                            @php($routePattern = str_replace('.index', '.*', $routeName))
-                            @php($isActive = request()->routeIs($routePattern))
-                            <a
-                                href="{{ route($routeName) }}"
-                                @class([
-                                    'rounded-md px-3 py-2 font-medium',
-                                    'bg-slate-900 text-white' => $isActive,
-                                    'text-slate-600 hover:bg-slate-100' => ! $isActive,
-                                ])
-                            >
-                                {{ $label }}
-                            </a>
-                        @endif
-                    @endforeach
+                <p class="app-nav-label">WORKSPACE</p>
+                <nav class="app-nav" aria-label="Navigasi utama">
+                    <a href="{{ route('dashboard') }}" @class(['app-nav-link', 'is-active' => request()->routeIs('dashboard')])>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ route('coa-categories.index') }}" @class(['app-nav-link', 'is-active' => request()->routeIs('coa-categories.*')])>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 5.5v15M8 7h8M8 11h7"/></svg>
+                        <span>Kategori COA</span>
+                    </a>
+                    <a href="{{ route('coas.index') }}" @class(['app-nav-link', 'is-active' => request()->routeIs('coas.*')])>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+                        <span>Chart of Accounts</span>
+                    </a>
+                    <a href="{{ route('transactions.index') }}" @class(['app-nav-link', 'is-active' => request()->routeIs('transactions.*')])>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h15l-3-3M20 17H5l3 3"/><path d="M19 7v4M5 13v4"/></svg>
+                        <span>Transaksi</span>
+                    </a>
+                    <a href="{{ route('profit-loss.index') }}" @class(['app-nav-link', 'is-active' => request()->routeIs('profit-loss.*')])>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h17"/><path d="m7 15 4-4 3 2 6-7"/></svg>
+                        <span>Laporan Laba Rugi</span>
+                    </a>
                 </nav>
+
+                <div class="app-sidebar-footer">
+                    <span class="app-status-dot"></span>
+                    <span>Sistem pembukuan aktif</span>
+                </div>
+            </aside>
+
+            <div class="app-main">
+                <header class="app-topbar">
+                    <div class="app-topbar-title">
+                        <span class="app-eyebrow">FINANCE WORKSPACE</span>
+                        <strong>@yield('title', 'TBK Finance')</strong>
+                    </div>
+                    <div class="app-user">
+                        <div class="app-user-avatar">TB</div>
+                        <div>
+                            <strong>Administrator</strong>
+                            <span>TBK Finance</span>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="app-content">
+                    @if (session('success'))
+                        <div class="app-alert app-alert-success" role="status">
+                            <span class="app-alert-icon" aria-hidden="true">✓</span>
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="app-alert app-alert-error" role="alert">
+                            <span class="app-alert-icon" aria-hidden="true">!</span>
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @yield('content')
+                </main>
             </div>
-        </header>
+        </div>
 
-        <main class="mx-auto max-w-5xl px-4 py-8">
-            {{-- Pesan sukses/error berasal dari flash session yang di-set controller. --}}
-            @if (session('success'))
-                <div class="mb-6 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            @yield('content')
-        </main>
-
-        {{-- Slot untuk script tambahan (mis. bundle Vue di halaman transaksi). --}}
         @stack('scripts')
     </body>
 </html>

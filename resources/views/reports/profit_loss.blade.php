@@ -86,6 +86,18 @@
         >
             Export Excel
         </a>
+        <a
+            href="{{ route('profit-loss.export.csv', ['start_month' => $start->format('Y-m'), 'end_month' => $end->format('Y-m'), 'search' => $search]) }}"
+            class="rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600"
+        >
+            Export CSV
+        </a>
+        <a
+            href="{{ route('profit-loss.export.pdf', ['start_month' => $start->format('Y-m'), 'end_month' => $end->format('Y-m'), 'search' => $search]) }}"
+            class="rounded-md bg-rose-700 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600"
+        >
+            Export PDF
+        </a>
     </form>
 
     @include('reports._profit_loss_table', ['report' => $report])

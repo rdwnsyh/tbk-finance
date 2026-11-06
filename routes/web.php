@@ -2,14 +2,13 @@
 
 use App\Http\Controllers\CoaCategoryController;
 use App\Http\Controllers\CoaController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfitLossController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
-// Halaman awal langsung diarahkan ke daftar kategori agar aplikasi bisa
-// dipakai tanpa halaman kosong. Redirect dipakai (bukan view) supaya URL
-// tetap konsisten dan navigasi "Kembali" tidak membuka halaman perantara.
-Route::redirect('/', '/coa-categories');
+Route::get('/', DashboardController::class)->name('dashboard');
+Route::get('/dashboard', DashboardController::class);
 
 // Resource route standar CRUD. `show` dikecualikan karena daftar sudah memuat
 // semua informasi yang dibutuhkan, jadi halaman detail terpisah tidak perlu.
@@ -33,6 +32,12 @@ Route::resource('transactions', TransactionController::class)
 // di-bookmark dan halaman bisa di-refresh tanpa mengubah state.
 Route::get('profit-loss/export', [ProfitLossController::class, 'export'])
     ->name('profit-loss.export');
+
+Route::get('profit-loss/export/csv', [ProfitLossController::class, 'exportCsv'])
+    ->name('profit-loss.export.csv');
+
+Route::get('profit-loss/export/pdf', [ProfitLossController::class, 'exportPdf'])
+    ->name('profit-loss.export.pdf');
 
 Route::get('profit-loss', [ProfitLossController::class, 'index'])
     ->name('profit-loss.index');

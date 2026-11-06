@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Exports\ProfitLossExport;
 use App\Http\Requests\ProfitLossRequest;
 use App\Services\ProfitLossService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -43,6 +46,43 @@ class ProfitLossController extends Controller
             new ProfitLossExport($this->filterReport($service->report($start, $end), $search)),
             $filename,
         );
+    }
+
+    public function exportCsv(ProfitLossRequest $request, ProfitLossService $service): BinaryFileResponse
+    {
+        [$start, $end] = $this->resolvePeriod($request, $service);
+        $search = trim($request->validated('search', ''));
+        $filename = sprintf(
+            'laporan-laba-rugi-%s-%s.csv',
+            $start->format('Y-m'),
+            $end->format('Y-m'),
+        );
+
+        return Excel::download(
+            new ProfitLossExport($this->filterReport($service->report($start, $end), $search)),
+            $filename,
+            ExcelWriter::CSV,
+        );
+    }
+
+    public function exportPdf(ProfitLossRequest $request, ProfitLossService $service): Response
+    {
+        [$start, $end] = $this->resolvePeriod($request, $service);
+        $search = trim($request->validated('search', ''));
+        $filename = sprintf(
+            'laporan-laba-rugi-%s-%s.pdf',
+            $start->format('Y-m'),
+            $end->format('Y-m'),
+        );
+
+        return Pdf::loadView('reports.profit_loss_pdf', [
+            'report' => $this->filterReport($service->report($start, $end), $search),
+            'start' => $start,
+            'end' => $end,
+            'search' => $search,
+        ])
+            ->setPaper('a4', 'landscape')
+            ->download($filename);
     }
 
     /**

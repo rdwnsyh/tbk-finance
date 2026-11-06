@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * Halaman awal memang diarahkan ke daftar kategori COA.
-     */
-    public function test_the_home_page_redirects_to_coa_categories(): void
+    use RefreshDatabase;
+
+    public function test_the_home_page_renders_the_dashboard(): void
     {
-        $this->get('/')->assertRedirect(route('coa-categories.index'));
+        $this->get('/')
+            ->assertOk()
+            ->assertViewIs('dashboard')
+            ->assertSee('Dashboard');
     }
 }

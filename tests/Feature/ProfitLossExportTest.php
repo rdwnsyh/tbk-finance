@@ -148,6 +148,72 @@ class ProfitLossExportTest extends TestCase
         );
     }
 
+    public function test_csv_download_uses_the_selected_period_and_filtered_months(): void
+    {
+        $incomeCategory = CoaCategory::create([
+            'name' => 'Pendapatan',
+            'type' => CoaCategory::TYPE_INCOME,
+        ]);
+        $incomeCoa = $this->createCoa(401, 'Salary', $incomeCategory);
+        $this->createTransaction('2022-01-05', $incomeCoa, credit: 12000000);
+        $this->createTransaction('2022-02-05', $incomeCoa, credit: 6000000);
+
+        $februaryReport = app(ProfitLossService::class)->report(
+            Carbon::parse('2022-02-01'),
+            Carbon::parse('2022-02-28'),
+        );
+        $csvContents = Excel::raw(new ProfitLossExport($februaryReport), ExcelWriter::CSV);
+
+        $this->assertStringContainsString('"Category","2022-02"', $csvContents);
+        $this->assertStringContainsString('"Salary","6000000"', $csvContents);
+        $this->assertStringContainsString('"Total Income","6000000"', $csvContents);
+
+        Excel::fake();
+
+        $this->get(route('profit-loss.export.csv', [
+            'start_month' => '2022-01',
+            'end_month' => '2022-02',
+            'search' => 'Februari',
+        ]))->assertOk();
+
+        Excel::assertDownloaded(
+            'laporan-laba-rugi-2022-01-2022-02.csv',
+            function (ProfitLossExport $export): bool {
+                $this->assertSame([
+                    ['Laporan Profit/Loss'],
+                    ['Category', '2022-02'],
+                    ['', 'Amount'],
+                    ['Salary', 6000000.0],
+                    ['Total Income', 6000000.0],
+                    ['Total Expense', 0.0],
+                    ['Net Income', 6000000.0],
+                ], $export->array());
+
+                return true;
+            },
+        );
+    }
+
+    public function test_pdf_download_contains_a_pdf_for_the_selected_period(): void
+    {
+        $incomeCategory = CoaCategory::create([
+            'name' => 'Pendapatan',
+            'type' => CoaCategory::TYPE_INCOME,
+        ]);
+        $incomeCoa = $this->createCoa(401, 'Salary', $incomeCategory);
+        $this->createTransaction('2022-01-05', $incomeCoa, credit: 12000000);
+
+        $response = $this->get(route('profit-loss.export.pdf', [
+            'start_month' => '2022-01',
+            'end_month' => '2022-01',
+        ]));
+
+        $response->assertOk()
+            ->assertDownload('laporan-laba-rugi-2022-01-2022-01.pdf')
+            ->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+    }
+
     private function createCoa(int $code, string $name, CoaCategory $category): Coa
     {
         return Coa::create([
