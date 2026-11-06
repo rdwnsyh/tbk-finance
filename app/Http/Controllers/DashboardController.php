@@ -42,8 +42,8 @@ class DashboardController extends Controller
                 ->with('coa:id,code,name')
                 ->orderByDesc('date')
                 ->orderByDesc('id')
-                ->limit(6)
-                ->get(),
+                ->paginate(6)
+                ->withQueryString(),
             'trend' => $trend,
             'trendMonthCount' => $trend->count(),
         ]);

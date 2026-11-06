@@ -50,3 +50,7 @@
         </tfoot>
     </table>
 </div>
+
+<div class="mt-4">
+    {{ $report['rows']->links() }}
+</div>

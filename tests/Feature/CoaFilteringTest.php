@@ -60,4 +60,40 @@ class CoaFilteringTest extends TestCase
             ->assertSee('Operasional')
             ->assertDontSee('Penjualan');
     }
+
+    public function test_coa_pagination_keeps_search_and_type_filters(): void
+    {
+        $category = CoaCategory::create([
+            'name' => 'Pendapatan',
+            'type' => CoaCategory::TYPE_INCOME,
+        ]);
+
+        foreach (range(1, 11) as $number) {
+            Coa::create([
+                'code' => 4000 + $number,
+                'name' => sprintf('Penjualan %02d', $number),
+                'coa_category_id' => $category->id,
+            ]);
+        }
+
+        $this->get(route('coas.index', [
+            'search' => 'Penjualan',
+            'type' => CoaCategory::TYPE_INCOME,
+            'page' => 2,
+        ]))
+            ->assertOk()
+            ->assertSee('Penjualan 11')
+            ->assertSee('search=Penjualan', false)
+            ->assertSee('type=income', false)
+            ->assertSee('page=1', false)
+            ->assertSee('Previous');
+
+        $this->get(route('coas.index', [
+            'search' => 'Penjualan',
+            'type' => CoaCategory::TYPE_INCOME,
+        ]))
+            ->assertOk()
+            ->assertSee('page=2', false)
+            ->assertSee('Next');
+    }
 }

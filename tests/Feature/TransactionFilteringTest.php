@@ -82,6 +82,15 @@ class TransactionFilteringTest extends TestCase
             ->assertSee('Dalam periode 01')
             ->assertDontSee('Di luar periode')
             ->assertSee('date_from=2026-03-01', false)
-            ->assertSee('date_to=2026-03-31', false);
+            ->assertSee('date_to=2026-03-31', false)
+            ->assertSee('Previous');
+
+        $this->get(route('transactions.index', [
+            'date_from' => '2026-03-01',
+            'date_to' => '2026-03-31',
+        ]))
+            ->assertOk()
+            ->assertSee('page=2', false)
+            ->assertSee('Next');
     }
 }

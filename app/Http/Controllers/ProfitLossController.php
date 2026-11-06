@@ -8,6 +8,7 @@ use App\Services\ProfitLossService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Excel as ExcelWriter;
@@ -21,6 +22,19 @@ class ProfitLossController extends Controller
         [$start, $end] = $this->resolvePeriod($request, $service);
         $search = trim($request->validated('search', ''));
         $report = $this->filterReport($service->report($start, $end), $search);
+        $rows = $report['rows'];
+        $perPage = 10;
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $report['rows'] = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
 
         return view('reports.profit_loss', [
             'report' => $report,

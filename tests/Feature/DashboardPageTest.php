@@ -105,4 +105,40 @@ class DashboardPageTest extends TestCase
             ->assertSee('title="Pendapatan Maret 2026: Rp -1.000"', false)
             ->assertSee('style="width: 100%"', false);
     }
+
+    public function test_dashboard_transactions_can_be_browsed_with_previous_and_next_links(): void
+    {
+        $category = CoaCategory::create([
+            'name' => 'Beban',
+            'type' => CoaCategory::TYPE_EXPENSE,
+        ]);
+        $coa = Coa::create([
+            'code' => 601,
+            'name' => 'Beban Operasional',
+            'coa_category_id' => $category->id,
+        ]);
+
+        foreach (range(1, 7) as $day) {
+            Transaction::create([
+                'date' => sprintf('2026-03-%02d', $day),
+                'coa_id' => $coa->id,
+                'description' => sprintf('Transaksi %02d', $day),
+                'debit' => 1000,
+                'credit' => 0,
+            ]);
+        }
+
+        $this->get(route('dashboard', ['page' => 2]))
+            ->assertOk()
+            ->assertSee('Transaksi 01')
+            ->assertDontSee('Transaksi 07')
+            ->assertSee('page=1', false)
+            ->assertSee('Previous');
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Transaksi 07')
+            ->assertSee('page=2', false)
+            ->assertSee('Next');
+    }
 }

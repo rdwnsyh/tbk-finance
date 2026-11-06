@@ -46,6 +46,14 @@ class CoaCategoryFilteringTest extends TestCase
         ]));
 
         $response->assertOk()
-            ->assertSee('search=Kategori%20Pencarian', false);
+            ->assertSee('search=Kategori%20Pencarian', false)
+            ->assertSee('Previous');
+
+        $this->get(route('coa-categories.index', [
+            'search' => 'Kategori Pencarian',
+        ]))
+            ->assertOk()
+            ->assertSee('page=2', false)
+            ->assertSee('Next');
     }
 }
