@@ -6,6 +6,7 @@ use App\Exports\ProfitLossExport;
 use App\Http\Requests\ProfitLossRequest;
 use App\Services\ProfitLossService;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -49,13 +50,17 @@ class ProfitLossController extends Controller
      * so the table and exported spreadsheet reflect the same search.
      *
      * @param  array{
-     *     rows: \Illuminate\Support\Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     rows: Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     income_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
+     *     expense_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
      *     total_income: float,
      *     total_expense: float,
      *     total_net: float
      * }  $report
      * @return array{
-     *     rows: \Illuminate\Support\Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     rows: Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     income_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
+     *     expense_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
      *     total_income: float,
      *     total_expense: float,
      *     total_net: float
@@ -63,20 +68,37 @@ class ProfitLossController extends Controller
      */
     private function filterReport(array $report, string $search): array
     {
-        if ($search === '') {
-            return $report;
+        if ($search !== '') {
+            $needle = mb_strtolower($search);
+            $report['rows'] = $report['rows']
+                ->filter(fn (array $row): bool => str_contains(mb_strtolower($row['label']), $needle)
+                    || str_contains($row['month'], $search))
+                ->values();
+            $report['total_income'] = round((float) $report['rows']->sum('income'), 2);
+            $report['total_expense'] = round((float) $report['rows']->sum('expense'), 2);
+            $report['total_net'] = round((float) $report['rows']->sum('net'), 2);
         }
 
-        $needle = mb_strtolower($search);
-        $report['rows'] = $report['rows']
-            ->filter(fn (array $row): bool => str_contains(mb_strtolower($row['label']), $needle)
-                || str_contains($row['month'], $search))
-            ->values();
-        $report['total_income'] = round((float) $report['rows']->sum('income'), 2);
-        $report['total_expense'] = round((float) $report['rows']->sum('expense'), 2);
-        $report['total_net'] = round((float) $report['rows']->sum('net'), 2);
+        $monthKeys = array_fill_keys($report['rows']->pluck('month')->all(), true);
+        $report['income_accounts'] = $this->filterAccountAmounts($report['income_accounts'], $monthKeys);
+        $report['expense_accounts'] = $this->filterAccountAmounts($report['expense_accounts'], $monthKeys);
 
         return $report;
+    }
+
+    /**
+     * Keep account amounts aligned with the months visible after report search.
+     *
+     * @param  Collection<int, array{code:int,name:string,amounts:array<string,float>}>  $accounts
+     * @param  array<string, bool>  $monthKeys
+     * @return Collection<int, array{code:int,name:string,amounts:array<string,float>}>
+     */
+    private function filterAccountAmounts(Collection $accounts, array $monthKeys): Collection
+    {
+        return $accounts->map(fn (array $account): array => [
+            ...$account,
+            'amounts' => array_intersect_key($account['amounts'], $monthKeys),
+        ]);
     }
 
     /**

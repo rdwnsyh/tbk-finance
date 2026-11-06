@@ -40,6 +40,8 @@ class ProfitLossService
      *
      * @return array{
      *     rows: Collection<int, array{month:string,label:string,income:float,expense:float,net:float}>,
+     *     income_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
+     *     expense_accounts: Collection<int, array{code:int,name:string,amounts:array<string,float>}>,
      *     total_income: float,
      *     total_expense: float,
      *     total_net: float
@@ -82,6 +84,11 @@ class ProfitLossService
             $cursor->addMonthNoOverflow();
         }
 
+        $accounts = [
+            CoaCategory::TYPE_INCOME => [],
+            CoaCategory::TYPE_EXPENSE => [],
+        ];
+
         foreach ($transactions as $transaction) {
             $key = $transaction->date->format('Y-m');
 
@@ -92,12 +99,22 @@ class ProfitLossService
             $type = $transaction->coa->coaCategory->type;
             $debit = (float) $transaction->debit;
             $credit = (float) $transaction->credit;
+            $amount = $type === CoaCategory::TYPE_INCOME
+                ? $credit - $debit
+                : $debit - $credit;
 
             if ($type === CoaCategory::TYPE_INCOME) {
-                $rows[$key]['income'] += $credit - $debit;
+                $rows[$key]['income'] += $amount;
             } else {
-                $rows[$key]['expense'] += $debit - $credit;
+                $rows[$key]['expense'] += $amount;
             }
+
+            $accounts[$type][$transaction->coa_id] ??= [
+                'code' => $transaction->coa->code,
+                'name' => $transaction->coa->name,
+                'amounts' => array_fill_keys(array_keys($rows), 0.0),
+            ];
+            $accounts[$type][$transaction->coa_id]['amounts'][$key] += $amount;
         }
 
         foreach ($rows as &$row) {
@@ -105,10 +122,29 @@ class ProfitLossService
         }
         unset($row);
 
+        foreach ($accounts as &$typeAccounts) {
+            foreach ($typeAccounts as &$account) {
+                foreach ($account['amounts'] as &$amount) {
+                    $amount = round($amount, 2);
+                }
+                unset($amount);
+            }
+            unset($account);
+        }
+        unset($typeAccounts);
+
         $rows = collect($rows)->values();
+        $incomeAccounts = collect($accounts[CoaCategory::TYPE_INCOME])
+            ->sortBy('code')
+            ->values();
+        $expenseAccounts = collect($accounts[CoaCategory::TYPE_EXPENSE])
+            ->sortBy('code')
+            ->values();
 
         return [
             'rows' => $rows,
+            'income_accounts' => $incomeAccounts,
+            'expense_accounts' => $expenseAccounts,
             'total_income' => round((float) $rows->sum('income'), 2),
             'total_expense' => round((float) $rows->sum('expense'), 2),
             'total_net' => round((float) $rows->sum('net'), 2),
